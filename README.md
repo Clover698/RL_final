@@ -24,7 +24,7 @@ PS. Please modify `--save_path` in eval_fid.sh, this means the path of the RL mo
 
 (Note all these codes may not be 100% accurate)
 
-## Experimental Results
+## Experimental Results - Generation
 
 ### CIFAR 10 (Generation)
 | | T=5 | T=10 | T=20 | T=100|
@@ -46,9 +46,9 @@ Thresholds of sparse reward are set 0.55, 0.76, 0.89 for T of 5, 10, 20.
 The results of RL are worse than DDIM, which are likely caused by the discrepancy between FID and SSIM.
 Moreover, prior work has not implemented on high-resolution (256x256) images, which are more difficult tasks.
 
-### DDNM 
+## Experimental Results - DDNM 
 
-## PSNR (ImageNet1K) (SR) 
+### PSNR (ImageNet1K) (SR) 
 |               | T=5  | T=10 | T=20 | T=100 |
 |---------------|------|------|------|-------|
 | DDNM          | 26.82| 26.95| 27.12| 27.46 |
@@ -64,7 +64,7 @@ Moreover, prior work has not implemented on high-resolution (256x256) images, wh
 
 
 
-2. SSIM (ImageNet1K) (SR) 
+### SSIM (ImageNet1K) (SR) 
 | | T=5 | T=10 | T=20 | T=100|
 | --- | --- | --- | --- | --- |
 | DDNM |0.880|0.881|0.884|0.890|
@@ -78,7 +78,7 @@ Moreover, prior work has not implemented on high-resolution (256x256) images, wh
 |Combined(D/S)|0.881||||
 |2 agents|0.882||||
 
-3. PSNR (ImageNet1K) (DB) 
+### PSNR (ImageNet1K) (DB) 
 | | T=5 | T=10 | T=20 | T=100|
 | --- | --- | --- | --- | --- |
 | DDNM |40.57|42.02|43.21|45.13|
@@ -97,7 +97,7 @@ Moreover, prior work has not implemented on high-resolution (256x256) images, wh
 |subtask 2(discrete20)|42.52||||
 
 
-4. SSIM (ImageNet1K) (DB) 
+### SSIM (ImageNet1K) (DB) 
 | | T=5 | T=10 | T=20 | T=100|
 | --- | --- | --- | --- | --- |
 | DDNM |0.990|0.992|0.993|0.995|
@@ -116,25 +116,25 @@ Moreover, prior work has not implemented on high-resolution (256x256) images, wh
 |subtask 2(discrete20)|0.993||||
 
 
-5. PSNR (CelebaHQ1K) (SR) 
+### PSNR (CelebaHQ1K) (SR) 
 | | T=5 | T=10 | T=20 | T=100|
 | --- | --- | --- | --- | --- |
 | DDNM |31.76|31.79|31.72|31.71|
 | RL   | | | |-|
 
-6. SSIM (CelebaHQ1K) (SR) 
+### SSIM (CelebaHQ1K) (SR) 
 | | T=5 | T=10 | T=20 | T=100|
 | --- | --- | --- | --- | --- |
 | DDNM |0.952|0.952|0.951|0.950|
 | RL   | | | |-|
 
-7. PSNR (CelebaHQ1K) (DB) 
+### PSNR (CelebaHQ1K) (DB) 
 | | T=5 | T=10 | T=20 | T=100|
 | --- | --- | --- | --- | --- |
 | DDNM |48.71|50.11|51.65|55.82|
 | RL   | | | |-|
 
-8. SSIM (CelebaHQ1K) (DB) 
+### SSIM (CelebaHQ1K) (DB) 
 | | T=5 | T=10 | T=20 | T=100|
 | --- | --- | --- | --- | --- |
 | DDNM |0.998|0.999|0.999|1.000|
