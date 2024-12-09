@@ -49,18 +49,19 @@ Moreover, prior work has not implemented on high-resolution (256x256) images, wh
 ### DDNM 
 
 1. PSNR (ImageNet1K) (SR) 
-| | T=5 | T=10 | T=20 | T=100|
-| --- | --- | --- | --- | --- |
-| DDNM |26.82|26.95|27.12|27.46|
-| RL   |26.84|26.94|27.10|-|
-|subtask 1(continuous)|26.89||||
-|subtask 1(discrete10)|26.86||||
-|subtask 1(discrete20)|26.90||||
-|subtask 2(continuous)|26.84||||
-|Combined(continuous)|26.88||||
-|Combined(discrete20)|26.89||||
-|Combined(D/S)|26.91||||
-|2 agents|26.99||||
+|               | T=5  | T=10 | T=20 | T=100 |
+|---------------|------|------|------|-------|
+| DDNM          | 26.82| 26.95| 27.12| 27.46 |
+| RL            | 26.84| 26.94| 27.10| -     |
+| subtask 1 (continuous) | 26.89|      |      |       |
+| subtask 1 (discrete 10) | 26.86|      |      |       |
+| subtask 1 (discrete 20) | 26.90|      |      |       |
+| subtask 2 (continuous) | 26.84|      |      |       |
+| Combined (continuous) | 26.88|      |      |       |
+| Combined (discrete 20) | 26.89|      |      |       |
+| Combined (D/S) | 26.91|      |      |       |
+| 2 agents      | 26.99|      |      |       |
+
 
 
 2. SSIM (ImageNet1K) (SR) 
