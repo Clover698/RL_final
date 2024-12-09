@@ -48,7 +48,7 @@ Moreover, prior work has not implemented on high-resolution (256x256) images, wh
 
 ### DDNM 
 
-1. PSNR (ImageNet1K) (SR) 
+## PSNR (ImageNet1K) (SR) 
 |               | T=5  | T=10 | T=20 | T=100 |
 |---------------|------|------|------|-------|
 | DDNM          | 26.82| 26.95| 27.12| 27.46 |
