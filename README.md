@@ -54,12 +54,12 @@ Moreover, prior work has not implemented on high-resolution (256x256) images, wh
 | DDNM |26.82|26.95|27.12|27.46|
 | RL   |26.84|26.94|27.10|-|
 |subtask 1(continuous)|26.89||||
-|subtask 1(discrete10)|26.86|||
-|subtask 1(discrete20)|26.90|||
+|subtask 1(discrete10)|26.86||||
+|subtask 1(discrete20)|26.90||||
 |subtask 2(continuous)|26.84||||
-|Combined(continuous)|26.88|||
-|Combined(discrete20)|26.89|||
-|Combined(D/S)|26.91|||
+|Combined(continuous)|26.88||||
+|Combined(discrete20)|26.89||||
+|Combined(D/S)|26.91||||
 |2 agents|26.99||||
 
 
@@ -69,12 +69,12 @@ Moreover, prior work has not implemented on high-resolution (256x256) images, wh
 | DDNM |0.880|0.881|0.884|0.890|
 | RL   |0.880|0.882|0.884|-|
 |subtask 1(continuous)|0.881||||
-|subtask 1(discrete10)|0.880|||
-|subtask 1(discrete20)|0.881|||
+|subtask 1(discrete10)|0.880||||
+|subtask 1(discrete20)|0.881||||
 |subtask 2(continuous)|0.881||||
-|Combined(continuous)|0.881|||
-|Combined(discrete20)|0.881|||
-|Combined(D/S)|0.881|||
+|Combined(continuous)|0.881||||
+|Combined(discrete20)|0.881||||
+|Combined(D/S)|0.881||||
 |2 agents|0.882||||
 
 3. PSNR (ImageNet1K) (DB) 
@@ -83,15 +83,15 @@ Moreover, prior work has not implemented on high-resolution (256x256) images, wh
 | DDNM |40.57|42.02|43.21|45.13|
 | RL   |42.62|||-|
 |subtask 1(continuous)|44.00||||
-|subtask 1(discrete10)|42.97|||
-|subtask 1(discrete20)|44.14|||
+|subtask 1(discrete10)|42.97||||
+|subtask 1(discrete20)|44.14||||
 |subtask 2(continuous)|43.79||||
-|Combined(continuous)|43.97|||
-|Combined(discrete20)|43.46|||
-|Combined(D/S)|44.06|||
+|Combined(continuous)|43.97||||
+|Combined(discrete20)|43.46||||
+|Combined(D/S)|44.06||||
 |2 agents|44.44||||
-|subtask 1(continuous)(PPO)|42.85|||
-|subtask 1(discrete20)(PPO)|43.67|||
+|subtask 1(continuous)(PPO)|42.85||||
+|subtask 1(discrete20)(PPO)|43.67||||
 |subtask 2(continuous)|42.95||||
 |subtask 2(discrete20)|42.52||||
 
@@ -102,15 +102,15 @@ Moreover, prior work has not implemented on high-resolution (256x256) images, wh
 | DDNM |0.990|0.992|0.993|0.995|
 | RL   |0.993|||-|
 |subtask 1(continuous)|0.994||||
-|subtask 1(discrete10)|0.993|||
-|subtask 1(discrete20)|0.994|||
+|subtask 1(discrete10)|0.993||||
+|subtask 1(discrete20)|0.994||||
 |subtask 2(continuous)|0.994||||
-|Combined(continuous)|0.994|||
-|Combined(discrete20)|0.994|||
-|Combined(D/S)|0.994|||
+|Combined(continuous)|0.994||||
+|Combined(discrete20)|0.994||||
+|Combined(D/S)|0.994||||
 |2 agents|0.995||||
-|subtask 1(continuous)(PPO)|0.993|||
-|subtask 1(discrete20)(PPO)|0.994|||
+|subtask 1(continuous)(PPO)|0.993||||
+|subtask 1(discrete20)(PPO)|0.994||||
 |subtask 2(continuous)|0.993||||
 |subtask 2(discrete20)|0.993||||
 
