@@ -12,9 +12,10 @@ from datasets import get_dataset, data_transform, inverse_data_transform
 from skimage.metrics import structural_similarity
 
 class EvalDiffusionEnv(gym.Env):
-    def __init__(self, target_steps=10, max_steps=100, threshold=0.8, DM=None):
+    def __init__(self, target_steps=10, max_steps=100, threshold=0.8, DM=None, agent1=None):
         super(EvalDiffusionEnv, self).__init__()
         self.DM = DM
+        self.agent1 = agent1
         self.target_steps = target_steps
         self.uniform_steps = [i for i in range(0, 999, 1000//target_steps)][::-1]
         # Threshold for the sparse reward
@@ -26,7 +27,7 @@ class EvalDiffusionEnv(gym.Env):
         # Count the number of steps
         self.current_step_num = 0 
         # Define the action and observation space
-        self.action_space = spaces.MultiDiscrete([20, 200])
+        self.action_space = gym.spaces.Box(low=-5, high=5)
         self.observation_space = Dict({
             "image": Box(low=-1, high=1, shape=(3, self.sample_size, self.sample_size), dtype=np.float32),
             "value": Box(low=np.array([0]), high=np.array([999]), dtype=np.uint16)
@@ -51,32 +52,37 @@ class EvalDiffusionEnv(gym.Env):
         self.x_orig, self.classes = self.DM.test_dataset[self.data_idx]
         self.x, self.y, self.Apy, self.x_orig, self.A_inv_y = self.DM.preprocess(self.x_orig, self.data_idx)
         self.x0_t = self.A_inv_y.clone()
-        self.search_initial_t = self.uniform_steps[0]
-        self.interval = self.search_initial_t / (self.target_steps - self.current_step_num - 1)
 
         observation = {
             "image": self.x0_t[0].cpu(),  
             "value": np.array([999])
         }
+        with torch.no_grad():
+            action, _state = self.agent1.predict(observation, deterministic=True)
+            start_t = 50 * (1+action) - 1
+            t = torch.tensor(int(max(0, min(start_t, 999))))
+            self.interval = int(t / (self.target_steps - 1)) 
+            self.x = self.DM.get_noisy_x(t, self.x0_t, initial=True)
+            self.action_sequence.append(action.item())
+            self.previous_t = t
+            self.x0_t, _,  self.et = self.DM.single_step_ddnm(self.x, self.y, t, self.classes)
+            self.time_step_sequence.append(t.item())
+            observation = {
+                "image": self.x0_t[0].cpu(),
+                "value": np.array([t])
+            }
+
+        torch.cuda.empty_cache()  # Clear GPU cache
         return observation, {}
     
-    def step(self, actions):
-        action_start = torch.tensor(actions[0])
-        action = torch.tensor(actions[1])
+    def step(self, action):
         truncate = True if self.current_step_num >= self.max_steps else False
         with torch.no_grad():
-            if self.current_step_num == 0:
-                start_t = 50 * (1+action_start) - 1
-                t = torch.tensor(int(max(0, min(start_t, 999))))
-                self.interval = int(t / (self.target_steps - 1)) 
-                self.x = self.DM.get_noisy_x(t, self.x0_t, initial=True)
-                self.action_sequence.append(action_start.item())
-            else:
-                t = self.previous_t - self.interval - self.interval * float(action - 100.0) / 200.0
-                t = torch.tensor(int(max(0, min(t, 999))))
-                self.interval = int(t / (self.target_steps - self.current_step_num - 1)) if (self.target_steps - self.current_step_num - 1) != 0 else self.interval
-                self.x = self.DM.get_noisy_x(t, self.x0_t, self.et)
-                self.action_sequence.append(action.item())
+            t = self.previous_t - self.interval - self.interval * float(action - 100.0) / 200.0
+            t = torch.tensor(int(max(0, min(t, 999))))
+            self.interval = int(t / (self.target_steps - self.current_step_num - 1)) if (self.target_steps - self.current_step_num - 1) != 0 else self.interval
+            self.x = self.DM.get_noisy_x(t, self.x0_t, self.et)
+            self.action_sequence.append(action.item())
             self.previous_t = t
             self.x0_t, _,  self.et = self.DM.single_step_ddnm(self.x, self.y, t, self.classes)
             self.time_step_sequence.append(t.item())

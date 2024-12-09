@@ -11,7 +11,6 @@ import warnings
 import gymnasium as gym
 from gymnasium.envs.registration import register
 import torch.nn.functional as F
-# from func import MD_SAC
 import os
 from main import parse_args_and_config
 from guided_diffusion.my_diffusion import Diffusion as my_diffusion
@@ -33,6 +32,7 @@ def make_env(my_config):
             "max_steps": my_config["max_steps"],
             "threshold": my_config["threshold"],
             "DM": my_config["DM"],
+            "agent1": my_config["agent1"],
         }
         return gym.make('final-eval', **config)
     return _init
@@ -77,20 +77,24 @@ def main():
         "num_eval_envs": 1,
         "eval_num": len(runner.test_dataset),
     }
-    my_config['save_path'] = f'model/sample_model_A2C_{my_config["target_steps"]}/{args.eval_model_idx}'
+    my_config['save_path'] = f'model/{args.eval_model_name}/best'
+
+    ### Load model with SB3
+    agent1 = A2C.load(my_config['save_path'])
+    agent2 = A2C.load(my_config['save_path'] + '_2')
+    print("Loaded model from: ", my_config['save_path'])
+
     config = {
             "target_steps": my_config["target_steps"],
             "max_steps": my_config["max_steps"],
             "threshold": my_config["threshold"],
             "DM": runner,
+            "agent1": agent1,
         }
 
-    ### Load model with SB3
-    model = A2C.load(my_config['save_path'])
-    print("Loaded model from: ", my_config['save_path'])
     env = DummyVecEnv([make_env(config) for _ in range(my_config['num_eval_envs'])])
     
-    avg_ssim, avg_psnr = evaluation(env, model, my_config['eval_num'])
+    avg_ssim, avg_psnr = evaluation(env, agent2, my_config['eval_num'])
 
     print(f"Counts: (Total of {my_config['eval_num']} rollouts)")
     print("Total Average PSNR: %.2f" % avg_psnr)
