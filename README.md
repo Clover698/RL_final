@@ -60,7 +60,7 @@ Moreover, prior work has not implemented on high-resolution (256x256) images, wh
 | Combined (continuous) | 26.88|      |      |       |
 | Combined (discrete 20) | 26.89|      |      |       |
 | Combined (D/S) | 26.91|      |      |       |
-| 2 agents      | 26.93|      |      |       |
+| 2 agents      | 26.97|      |      |       |
 
 
 
