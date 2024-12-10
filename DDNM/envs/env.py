@@ -116,7 +116,7 @@ class DiffusionEnv(gym.Env):
                 self.x = self.DM.get_noisy_x(t, self.x0_t, initial=True)
                 self.action_sequence.append(action.item())
             else: # Second subtask
-                t = self.previous_t - self.interval - self.interval * float(action - 100.0) / 200.0
+                t = self.previous_t - self.interval - self.interval * action
                 t = torch.tensor(int(max(0, min(t, 999))))
                 self.interval = int(t / (self.target_steps - self.current_step_num - 1)) if (self.target_steps - self.current_step_num - 1) != 0 else self.interval
                 self.x = self.DM.get_noisy_x(t, self.x0_t, self.et)
