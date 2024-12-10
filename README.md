@@ -60,7 +60,7 @@ Moreover, prior work has not implemented on high-resolution (256x256) images, wh
 | Combined (continuous) | 26.88|      |      |       |
 | Combined (discrete 20) | 26.89|      |      |       |
 | Combined (D/S) | 26.91|      |      |       |
-| 2 agents      | 26.99|      |      |       |
+| 2 agents      | 26.93|      |      |       |
 
 
 
@@ -90,7 +90,7 @@ Moreover, prior work has not implemented on high-resolution (256x256) images, wh
 |Combined(continuous)|43.97||||
 |Combined(discrete20)|43.46||||
 |Combined(D/S)|44.06||||
-|2 agents|44.44||||
+|2 agents|44.38||||
 |subtask 1(continuous)(PPO)|42.85||||
 |subtask 1(discrete20)(PPO)|43.67||||
 |subtask 2(continuous)|42.95||||
@@ -109,7 +109,7 @@ Moreover, prior work has not implemented on high-resolution (256x256) images, wh
 |Combined(continuous)|0.994||||
 |Combined(discrete20)|0.994||||
 |Combined(D/S)|0.994||||
-|2 agents|0.995||||
+|2 agents|0.994||||
 |subtask 1(continuous)(PPO)|0.993||||
 |subtask 1(discrete20)(PPO)|0.994||||
 |subtask 2(continuous)|0.993||||
