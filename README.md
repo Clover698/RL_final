@@ -52,6 +52,8 @@ To run experiments for our proposed 2 agents algorithm, go to `DDNM` and run:
 ```bash
 bash run.sh
 ```
+Since we only focus on results on 5-step case, we experiment on 5 steps and show the results of DDNM and RL with more steps just for reference.
+As you can see, DDNM with 5 steps already has not too bad results. Thus, only extreme case like 5 steps can better demonstrate the difference among different implementations.
 
 ### PSNR (ImageNet1K) (SR) 
 |               | T=5  | T=10 | T=20 | T=100 |
