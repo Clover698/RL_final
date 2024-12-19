@@ -48,7 +48,7 @@ Moreover, prior work has not implemented on high-resolution (256x256) images, wh
 
 ## Experimental Results - DDNM 
 
-To run experiments for our proposed 2 agents algorithm, go to `DDNM` to run:
+To run experiments for our proposed 2 agents algorithm, go to `DDNM` and run:
 ```bash
 bash run.sh
 ```
