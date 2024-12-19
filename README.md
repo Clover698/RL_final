@@ -48,6 +48,11 @@ Moreover, prior work has not implemented on high-resolution (256x256) images, wh
 
 ## Experimental Results - DDNM 
 
+To run experiments for our proposed 2 agents algorithm, go to `DDNM` to run:
+```bash
+bash run.sh
+```
+
 ### PSNR (ImageNet1K) (SR) 
 |               | T=5  | T=10 | T=20 | T=100 |
 |---------------|------|------|------|-------|
@@ -119,23 +124,27 @@ Moreover, prior work has not implemented on high-resolution (256x256) images, wh
 ### PSNR (CelebaHQ1K) (SR) 
 | | T=5 | T=10 | T=20 | T=100|
 | --- | --- | --- | --- | --- |
-| DDNM |31.76|31.79|31.72|31.71|
-| RL   | | | |-|
+| DDNM |31.77|31.80|31.72|31.71|
+| RL   |31.77| | |-|
+|2 agents|31.80| | |-|
 
 ### SSIM (CelebaHQ1K) (SR) 
 | | T=5 | T=10 | T=20 | T=100|
 | --- | --- | --- | --- | --- |
 | DDNM |0.952|0.952|0.951|0.950|
-| RL   | | | |-|
+| RL   |0.952| | |-|
+| 2 agents |0.952| | |-|
 
 ### PSNR (CelebaHQ1K) (DB) 
 | | T=5 | T=10 | T=20 | T=100|
 | --- | --- | --- | --- | --- |
-| DDNM |48.71|50.11|51.65|55.82|
-| RL   | | | |-|
+| DDNM |48.72|50.10|51.64|55.82|
+| RL   |52.16| | |-|
+| 2 agents  |55.48| | |-|
 
-### SSIM (CelebaHQ1K) (DB) 
+### SSIM (0) (DB) 
 | | T=5 | T=10 | T=20 | T=100|
 | --- | --- | --- | --- | --- |
 | DDNM |0.998|0.999|0.999|1.000|
-| RL   | | | |-|
+| RL   |0.999| | |-|
+| 2 agents  |1.000| | |-|
