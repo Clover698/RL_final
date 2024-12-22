@@ -212,7 +212,7 @@ class Diffusion(object):
     def simplified_ddnm_plus(self, model, cls_fn):
         args, config = self.args, self.config
 
-        dataset, test_dataset = get_dataset(args, config)
+        _, dataset, test_dataset = get_dataset(args, config)
 
         device_count = torch.cuda.device_count()
 
@@ -420,7 +420,7 @@ class Diffusion(object):
     def svd_based_ddnm_plus(self, model, cls_fn):
         args, config = self.args, self.config
 
-        dataset, test_dataset = get_dataset(args, config)
+        _, dataset, test_dataset = get_dataset(args, config)
 
         device_count = torch.cuda.device_count()
 

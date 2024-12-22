@@ -51,16 +51,20 @@ def evaluation(env, model, eval_num=100):
             # Interact with env using Gymnasium API
             action, _state = model.predict(obs, deterministic=True)
             obs, reward, done, info = env.step(action)
+        time_step_sequence = info[0]["time_step_sequence"]
         avg_ssim += info[0]['ssim']
         avg_psnr += info[0]['psnr']
     avg_ssim /= eval_num
     avg_psnr /= eval_num
 
-    return avg_ssim, avg_psnr
+    return avg_ssim, avg_psnr, time_step_sequence
 
 def main():
     # Initialze DDNM
     args, config = parse_args_and_config()
+    with open("./output.txt", "a") as file:
+        file.write("==========================\n")
+        file.write(f'{args.eval_model_name}\n')
     runner = my_diffusion(args, config)
 
     policy_kwargs = dict(
@@ -94,11 +98,18 @@ def main():
 
     env = DummyVecEnv([make_env(config) for _ in range(my_config['num_eval_envs'])])
     
-    avg_ssim, avg_psnr = evaluation(env, agent2, my_config['eval_num'])
+    avg_ssim, avg_psnr, timestep_sequence = evaluation(env, agent2, my_config['eval_num'])
 
     print(f"Counts: (Total of {my_config['eval_num']} rollouts)")
     print("Total Average PSNR: %.2f" % avg_psnr)
     print("Total Average SSIM: %.3f" % avg_ssim)
+    with open("./output.txt", 'a') as file:
+        file.write(f"Counts: (Total of {my_config['eval_num']} rollouts)\n")
+        file.write(f"time step sequence = {time_step_sequence}\n")
+        file.write("Total Average SSIM: %.3f" % avg_ssim)
+        file.write("\n")
+        file.write("Total Average PSNR: %.3f" % avg_psnr)
+        file.write("\n")
 
 
 if __name__ == '__main__':

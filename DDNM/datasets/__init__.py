@@ -46,11 +46,11 @@ def center_crop_arr(pil_image, image_size = 256):
 
 def get_dataset(args, config):
     if config.data.random_flip is False:
-        tran_transform = test_transform = transforms.Compose(
+        train_transform = test_transform = transforms.Compose(
             [transforms.Resize(config.data.image_size), transforms.ToTensor()]
         )
     else:
-        tran_transform = transforms.Compose(
+        train_transform = transforms.Compose(
             [
                 transforms.Resize(config.data.image_size),
                 transforms.RandomHorizontalFlip(p=0.5),
@@ -135,15 +135,17 @@ def get_dataset(args, config):
     
     elif config.data.dataset == "CelebA_HQ" or config.data.dataset == 'FFHQ':
         if config.data.out_of_dist:
-            dataset = torchvision.datasets.ImageFolder(
-                os.path.join(args.exp, "datasets", "ood_celeba"),
+            dataset = torchvision.datasets.ImageFolder( 
+                # os.path.join(args.exp, "datasets", "ood_celeba"),
+                os.path.join(args.input_root, "ood_celeba"),
                 transform=transforms.Compose([transforms.Resize([config.data.image_size, config.data.image_size]),
                                               transforms.ToTensor()])
             )
             test_dataset = dataset
         else:
             dataset = torchvision.datasets.ImageFolder(
-                os.path.join(args.exp, "datasets", args.path_y),#os.path.join(args.exp, "datasets", "celeba_hq"),
+                # os.path.join(args.exp, "datasets", "celeba_hq"),
+                os.path.join(args.input_root, "celeba_hq"),
                 transform=transforms.Compose([transforms.Resize([config.data.image_size, config.data.image_size]),
                                               transforms.ToTensor()])
             )
@@ -153,35 +155,39 @@ def get_dataset(args, config):
             np.random.seed(2019)
             np.random.shuffle(indices)
             np.random.set_state(random_state)
-            train_indices, test_indices = (
-                indices[: -1000],
-                indices[-1000 :],
-            )
             # train_indices, test_indices = (
             #     indices[: int(num_items * 0.9)],
             #     indices[int(num_items * 0.9) :],
             # )
-            # train_indices, test_indices = (
-            #     indices[: int(num_items * 0.)],
-            #     indices[int(num_items * 0.) :],
-            # )
+            train_indices, test_indices = (
+                indices[: -1000],
+                indices[-1000 :],
+            )
+            train_dataset = Subset(dataset, train_indices)
             test_dataset = Subset(dataset, test_indices)
-            dataset = Subset(dataset, train_indices)
 
     elif config.data.dataset == 'ImageNet':
         # only use validation dataset here
         
         if config.data.subset_1k:
             from datasets.imagenet_subset import ImageDataset
-            dataset = ImageDataset('/home/common/SharedDataset/ImageNet',
-                      os.path.join(args.exp, 'train_list.txt'),
+            dataset = None
+            train_dataset = ImageDataset(os.path.join(args.input_root, 'ImageNet', 'train'),
                      image_size=config.data.image_size,
                      normalize=False)
-            test_dataset = ImageDataset(os.path.join(args.exp, 'datasets', 'imagenet', 'imagenet'),
-                     os.path.join(args.exp, 'imagenet_val_1k.txt'),
+            test_dataset = ImageDataset(os.path.join(args.input_root, 'ImageNet', 'val'),
                      image_size=config.data.image_size,
                      normalize=False)
+            # train_dataset = ImageDataset('/home/common/SharedDataset/ImageNet',
+            #           os.path.join(args.exp, 'train_list.txt'),
+            #          image_size=config.data.image_size,
+            #          normalize=False)
+            # test_dataset = ImageDataset(os.path.join(args.exp, 'datasets', 'imagenet', 'imagenet'),
+            #          os.path.join(args.exp, 'imagenet_val_1k.txt'),
+            #          image_size=config.data.image_size,
+            #          normalize=False)
             # test_dataset = dataset
+
         elif config.data.out_of_dist:
             dataset = torchvision.datasets.ImageFolder(
                 os.path.join(args.exp, 'datasets', 'ood'),
@@ -197,9 +203,9 @@ def get_dataset(args, config):
             )
             test_dataset = dataset
     else:
-        dataset, test_dataset = None, None
+        dataset, train_dataset, test_dataset = None, None, None
 
-    return dataset, test_dataset
+    return dataset, train_dataset, test_dataset
 
 
 def logit_transform(image, lam=1e-6):

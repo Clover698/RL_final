@@ -5,8 +5,8 @@ from stable_baselines3 import A2C, DQN, PPO, SAC
 from gymnasium import spaces
 import torch as th
 import torch.nn as nn
-import wandb
-from wandb.integration.sb3 import WandbCallback
+# import wandb
+# from wandb.integration.sb3 import WandbCallback
 import warnings
 import gymnasium as gym
 from gymnasium.envs.registration import register
@@ -175,16 +175,16 @@ def train(eval_env, model, config, epoch_num, second_stage=False):
         print("Time_step_sequence:", time_step_sequence)
         print("Action_sequence:", action_sequence)
         print()
-        wandb.log(
-            {
-                "avg_reward": avg_reward,
-                "avg_ssim": avg_ssim,
-                "avg_psnr": avg_psnr,
-                "ddim_ssim": ddim_ssim,
-                "ddim_psnr": ddim_psnr,
-                "start_t": avg_start_t,
-            }
-        )
+        # wandb.log(
+        #     {
+        #         "avg_reward": avg_reward,
+        #         "avg_ssim": avg_ssim,
+        #         "avg_psnr": avg_psnr,
+        #         "ddim_ssim": ddim_ssim,
+        #         "ddim_psnr": ddim_psnr,
+        #         "start_t": avg_start_t,
+        #     }
+        # )
 
 
 def main():
@@ -211,14 +211,14 @@ def main():
 
         "max_steps": 100,
     }
-    my_config['run_id'] = f'SR_2agent_A2C_env_{my_config["num_train_envs"]}_steps_{my_config["target_steps"]}'
-    my_config['save_path'] = f'model/SR_2agent_A2C_{my_config["target_steps"]}'
-    run = wandb.init(
-        project="final",
-        config=my_config,
-        sync_tensorboard=True,  # auto-upload sb3's tensorboard metrics
-        id=my_config["run_id"],
-    )
+    my_config['run_id'] = f'{args.deg}_SR_2agent_A2C_env_{my_config["num_train_envs"]}_steps_{my_config["target_steps"]}'
+    my_config['save_path'] = f'model/{args.deg}_SR_2agent_A2C_{my_config["target_steps"]}'
+    # run = wandb.init(
+    #     project="final",
+    #     config=my_config,
+    #     sync_tensorboard=True,  # auto-upload sb3's tensorboard metrics
+    #     id=my_config["run_id"],
+    # )
     
     config = {
             "target_steps": my_config["target_steps"],

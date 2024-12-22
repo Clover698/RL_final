@@ -96,7 +96,9 @@ def parse_args_and_config():
     parser.add_argument(
         '--second_stage', action="store_true"
     )
-    
+    parser.add_argument(
+        '--input_root', type=str, default='/disk_195a/qiannnhui'
+    )    
 
     args = parser.parse_args()
 
