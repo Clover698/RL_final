@@ -123,28 +123,28 @@ As you can see, DDNM with 5 steps already has not too bad results. Thus, only ex
 |subtask 2(discrete20)|0.993||||
 
 
-5. PSNR (CelebaHQ1K) (SR) 
+### PSNR (CelebaHQ1K) (SR) 
 | | T=5 | T=10 | T=20 | T=100|
 | --- | --- | --- | --- | --- |
 | DDNM |31.77|31.80|31.72|31.71|
 | RL   |31.77|31.79|31.71|-|
 |2 agents|31.80|31.85|31.90|-|
 
-6. SSIM (CelebaHQ1K) (SR) 
+### SSIM (CelebaHQ1K) (SR) 
 | | T=5 | T=10 | T=20 | T=100|
 | --- | --- | --- | --- | --- |
 | DDNM |0.952|0.952|0.951|0.950|
 | RL   |0.952|0.952|0.951|-|
 | 2 agents |0.952|0.952|0.953|-|
 
-7. PSNR (CelebaHQ1K) (DB) 
+### PSNR (CelebaHQ1K) (DB) 
 | | T=5 | T=10 | T=20 | T=100|
 | --- | --- | --- | --- | --- |
 | DDNM |48.72|50.10|51.64|55.82|
 | RL   |52.16|52.75|54.61|-|
 | 2 agents  |55.48|54.71|54.70|-|
 
-8. SSIM (CelebaHQ1K) (DB) 
+### SSIM (CelebaHQ1K) (DB) 
 | | T=5 | T=10 | T=20 | T=100|
 | --- | --- | --- | --- | --- |
 | DDNM |0.998|0.999|0.999|1.000|
