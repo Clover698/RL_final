@@ -100,8 +100,8 @@ As you can see, DDNM with 5 steps already has not too bad results. Thus, only ex
 |2 agents|44.38||||
 |subtask 1(continuous)(PPO)|42.85||||
 |subtask 1(discrete20)(PPO)|43.67||||
-|subtask 2(continuous)|42.95||||
-|subtask 2(discrete20)|42.52||||
+|subtask 2(continuous)(PPO)|42.95||||
+|subtask 2(discrete20)(PPO)|42.52||||
 
 
 ### SSIM (ImageNet1K) (DB) 
@@ -119,8 +119,8 @@ As you can see, DDNM with 5 steps already has not too bad results. Thus, only ex
 |2 agents|0.994||||
 |subtask 1(continuous)(PPO)|0.993||||
 |subtask 1(discrete20)(PPO)|0.994||||
-|subtask 2(continuous)|0.993||||
-|subtask 2(discrete20)|0.993||||
+|subtask 2(continuous)(PPO)|0.993||||
+|subtask 2(discrete20)(PPO)|0.993||||
 
 
 ### PSNR (CelebaHQ1K) (SR) 
