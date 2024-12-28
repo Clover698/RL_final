@@ -67,7 +67,7 @@ As you can see, DDNM with 5 steps already has not too bad results. Thus, only ex
 | Combined (continuous) | 26.88|      |      |       |
 | Combined (discrete 20) | 26.89|      |      |       |
 | Combined (D/S) | 26.91|      |      |       |
-| 2 agents      | 26.97|      |      |       |
+| 2 agents      | 26.97|   27.05|27.23|      |
 
 
 
@@ -83,13 +83,13 @@ As you can see, DDNM with 5 steps already has not too bad results. Thus, only ex
 |Combined(continuous)|0.881||||
 |Combined(discrete20)|0.881||||
 |Combined(D/S)|0.881||||
-|2 agents|0.882||||
+|2 agents|0.882|0.883|0.886||
 
 ### PSNR (ImageNet1K) (DB) 
 | | T=5 | T=10 | T=20 | T=100|
 | --- | --- | --- | --- | --- |
 | DDNM |40.57|42.02|43.21|45.13|
-| RL   |42.62|||-|
+| RL   |42.62|43.27|43.89|-|
 |subtask 1(continuous)|44.00||||
 |subtask 1(discrete10)|42.97||||
 |subtask 1(discrete20)|44.14||||
@@ -97,7 +97,7 @@ As you can see, DDNM with 5 steps already has not too bad results. Thus, only ex
 |Combined(continuous)|43.97||||
 |Combined(discrete20)|43.46||||
 |Combined(D/S)|44.06||||
-|2 agents|44.38||||
+|2 agents|44.38|44.02|45.46||
 |subtask 1(continuous)(PPO)|42.85||||
 |subtask 1(discrete20)(PPO)|43.67||||
 |subtask 2(continuous)(PPO)|42.95||||
@@ -108,7 +108,7 @@ As you can see, DDNM with 5 steps already has not too bad results. Thus, only ex
 | | T=5 | T=10 | T=20 | T=100|
 | --- | --- | --- | --- | --- |
 | DDNM |0.990|0.992|0.993|0.995|
-| RL   |0.993|||-|
+| RL   |0.993|0.993|0.994|-|
 |subtask 1(continuous)|0.994||||
 |subtask 1(discrete10)|0.993||||
 |subtask 1(discrete20)|0.994||||
@@ -116,7 +116,7 @@ As you can see, DDNM with 5 steps already has not too bad results. Thus, only ex
 |Combined(continuous)|0.994||||
 |Combined(discrete20)|0.994||||
 |Combined(D/S)|0.994||||
-|2 agents|0.994||||
+|2 agents|0.994|0.993|0.995||
 |subtask 1(continuous)(PPO)|0.993||||
 |subtask 1(discrete20)(PPO)|0.994||||
 |subtask 2(continuous)(PPO)|0.993||||
