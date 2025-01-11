@@ -71,6 +71,7 @@ class EvalDiffusionEnv(gym.Env):
                 "image": self.x0_t[0].cpu(),
                 "value": np.array([t])
             }
+            self.current_step_num += 1
 
         torch.cuda.empty_cache()  # Clear GPU cache
         return observation, {}
