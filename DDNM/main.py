@@ -94,11 +94,15 @@ def parse_args_and_config():
         '--eval_model_idx', type=int, default=0
     )
     parser.add_argument(
+        '--eval_model_name', type=str, default=''
+    )
+    parser.add_argument(
         '--second_stage', action="store_true"
     )
     parser.add_argument(
-        '--input_root', type=str, default='/disk_195a/qiannnhui'
-    )    
+        '--baseline', action="store_true"
+    )
+
 
     args = parser.parse_args()
 
