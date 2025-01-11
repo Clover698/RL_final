@@ -57,12 +57,13 @@ class EvalDiffusionEnv(gym.Env):
             "image": self.x0_t[0].cpu(),  
             "value": np.array([999])
         }
+        # Run subtask 1
         with torch.no_grad():
             action, _state = self.agent1.predict(observation, deterministic=True)
             start_t = 50 * (1+action) - 1
             t = torch.tensor(int(max(0, min(start_t, 999))))
             self.interval = int(t / (self.target_steps - 1)) 
-            self.x = self.DM.get_noisy_x(t, self.x0_t, initial=True)
+            self.x = self.DM.get_noisy_x(t, self.x0_t, initial=True) # Commented out this line (Start from noise) if applying to CelebA dataset
             self.action_sequence.append(action.item())
             self.previous_t = t
             self.x0_t, _,  self.et = self.DM.single_step_ddnm(self.x, self.y, t, self.classes)
@@ -71,13 +72,13 @@ class EvalDiffusionEnv(gym.Env):
                 "image": self.x0_t[0].cpu(),
                 "value": np.array([t])
             }
-            self.current_step_num += 1
-
+        self.current_step_num += 1
         torch.cuda.empty_cache()  # Clear GPU cache
         return observation, {}
     
     def step(self, action):
         truncate = True if self.current_step_num >= self.max_steps else False
+        # Run subtask 2
         with torch.no_grad():
             t = self.previous_t - self.interval - self.interval * action
             t = torch.tensor(int(max(0, min(t, 999))))
