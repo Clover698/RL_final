@@ -5,8 +5,8 @@ from stable_baselines3 import A2C, DQN, PPO, SAC
 from gymnasium import spaces
 import torch as th
 import torch.nn as nn
-# import wandb
-# from wandb.integration.sb3 import WandbCallback
+import wandb
+from wandb.integration.sb3 import WandbCallback
 import warnings
 import gymnasium as gym
 from gymnasium.envs.registration import register
@@ -20,8 +20,12 @@ th.set_printoptions(sci_mode=False)
 
 warnings.filterwarnings("ignore")
 register(
-    id='final-v0',
+    id='final-ours',
     entry_point='envs:DiffusionEnv',
+)
+register(
+    id='final-baseline',
+    entry_point='envs:BaselineDiffusionEnv',
 )
 
 def make_env(my_config):
@@ -29,10 +33,16 @@ def make_env(my_config):
         config = {
             "target_steps": my_config["target_steps"],
             "max_steps": my_config["max_steps"],
+            "threshold": my_config["threshold"],
             "DM": my_config["DM"],
-            "agent1": my_config["agent1"],
         }
-        return gym.make('final-v0', **config)
+        if my_config["model_mode"] == "baseline":
+            print('Baseline training mode ...')
+            return gym.make('final-baseline', **config)
+        else:
+            print('2-agent training mode ...')
+            config["agent1"] = my_config["agent1"]
+            return gym.make('final-ours', **config)
     return _init
 
 class CustomCNN(BaseFeaturesExtractor):
@@ -49,12 +59,42 @@ class CustomCNN(BaseFeaturesExtractor):
         n_input_channels = observation_space['image'].shape[0]
         self.use_scale_shift_norm = use_scale_shift_norm
         self.cnn = nn.Sequential(
-            nn.Conv2d(n_input_channels, 32, kernel_size=3, stride=1, padding=0),
+            nn.Conv2d(n_input_channels, 32, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(32),  # Normalize features
             nn.ReLU(),
-            nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=0),
+            nn.Dropout(0.5),
+            nn.Conv2d(32, 64, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+            nn.Dropout(0.5),
+            nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(128),
+            nn.ReLU(),
+            nn.Dropout(0.5),
+            nn.Conv2d(128, 64, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+            nn.Dropout(0.5),
+            nn.Conv2d(64, 4, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
             nn.Flatten(),
         )
+
+        # for layer in self.cnn:
+        #     if isinstance(layer, nn.Conv2d):
+        #         nn.init.kaiming_uniform_(layer.weight, nonlinearity='relu')
+        
+        # self.cnn2 = nn.Sequential(
+        #     nn.Conv2d(n_input_channels, 16, kernel_size=3, stride=1, padding=0),
+        #     nn.ReLU(),
+        #     nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=0),
+        #     nn.ReLU(),
+        # )
+
+        # self.mix_fc = nn.Sequential(
+        #     nn.Conv2d(64, 32, kernel_size=1, stride=1, padding=0),
+        #     nn.Flatten(),
+        # )
 
         # Compute shape by doing one forward pass
         with th.no_grad():
@@ -72,6 +112,13 @@ class CustomCNN(BaseFeaturesExtractor):
 
     def forward(self, observations: th.Tensor) -> th.Tensor:
         img_features = self.cnn(observations['image'].float())
+        # if 'image2' in observations:
+        #     img_features2 = self.cnn2(observations['image2'].float())
+        #     img_features = th.cat((img_features, img_features2), dim=1)
+        #     img_features = self.mix_fc(img_features)
+        # else:
+            # img_features = img_features.flatten()
+
         value_features = F.relu(self.fc(observations['value'].float()))
         if self.use_scale_shift_norm:
             emb_out = self.embedding_output(value_features)
@@ -83,10 +130,11 @@ class CustomCNN(BaseFeaturesExtractor):
 
         return h
 
-def eval(env, model, eval_episode_num):
+def eval(env, model, eval_episode_num, num_steps):
     """Evaluate the model and return avg_score and avg_highest"""
     avg_reward = 0
-    avg_reward_t = [0 for _ in range(5)]
+    avg_reward_t = [0 for _ in range(num_steps)]
+    avg_t = [0 for _ in range(num_steps)]
     avg_ssim = 0
     avg_psnr = 0
     ddim_ssim = 0
@@ -112,7 +160,9 @@ def eval(env, model, eval_episode_num):
             avg_psnr += info['psnr']
             ddim_ssim += info['ddim_ssim']
             ddim_psnr += info['ddim_psnr']
-            avg_start_t += info['time_step_sequence'][0]
+            # avg_start_t += info['time_step_sequence'][0]
+            for i in range(num_steps):
+                avg_t[i] += info['time_step_sequence'][i]
 
     avg_reward /= eval_episode_num
     avg_ssim /= eval_episode_num
@@ -120,12 +170,13 @@ def eval(env, model, eval_episode_num):
     ddim_ssim /= eval_episode_num
     ddim_psnr /= eval_episode_num
     avg_start_t /= eval_episode_num
-    for i in range(5):
-        avg_reward_t[i] = avg_reward_t[i] / eval_episode_num
+    for i in range(num_steps):
+        avg_reward_t[i] = (avg_reward_t[i] / eval_episode_num)
+        avg_t[i] = avg_t[i] / eval_episode_num
     
-    return avg_reward, avg_ssim, avg_psnr, ddim_ssim, ddim_psnr, info['time_step_sequence'], info['action_sequence'], avg_reward_t, avg_start_t
+    return avg_reward, avg_ssim, avg_psnr, ddim_ssim, ddim_psnr, info['time_step_sequence'], info['action_sequence'], info['threshold'], avg_reward_t, avg_t
 
-def train(eval_env, model, config, epoch_num, second_stage=False):
+def train(eval_env, model, config, epoch_num, second_stage=False, num_steps=5):
     """Train agent using SB3 algorithm and my_config"""
     current_best_psnr = 0
     current_best_ssim = 0
@@ -145,7 +196,7 @@ def train(eval_env, model, config, epoch_num, second_stage=False):
         ### Evaluation
         print(config["run_id"])
         print("Epoch: ", epoch)
-        avg_reward, avg_ssim, avg_psnr, ddim_ssim, ddim_psnr, time_step_sequence, action_sequence, avg_reward_t, avg_start_t = eval(eval_env, model, config["eval_episode_num"])
+        avg_reward, avg_ssim, avg_psnr, ddim_ssim, ddim_psnr, time_step_sequence, action_sequence, threshold, avg_reward_t, avg_t = eval(eval_env, model, config["eval_episode_num"], num_steps)
 
         print("---------------")
 
@@ -163,9 +214,10 @@ def train(eval_env, model, config, epoch_num, second_stage=False):
                 model.save(f"{save_path}/best")
 
 
+        print("Threshold:", threshold)
         print("Avg_reward:  ", avg_reward)
         print("Avg_reward_t:  ", avg_reward_t)
-        print("Avg_start_t:  ", avg_start_t)
+        print("Avg_t:  ", avg_t)
         print("Avg_ssim:    ", avg_ssim)
         print("Avg_psnr:    ", avg_psnr)
         print("Current_best_ssim:", current_best_ssim)
@@ -175,16 +227,16 @@ def train(eval_env, model, config, epoch_num, second_stage=False):
         print("Time_step_sequence:", time_step_sequence)
         print("Action_sequence:", action_sequence)
         print()
-        # wandb.log(
-        #     {
-        #         "avg_reward": avg_reward,
-        #         "avg_ssim": avg_ssim,
-        #         "avg_psnr": avg_psnr,
-        #         "ddim_ssim": ddim_ssim,
-        #         "ddim_psnr": ddim_psnr,
-        #         "start_t": avg_start_t,
-        #     }
-        # )
+        wandb.log(
+            {
+                "avg_reward": avg_reward,
+                "avg_ssim": avg_ssim,
+                "avg_psnr": avg_psnr,
+                "ddim_ssim": ddim_ssim,
+                "ddim_psnr": ddim_psnr,
+                "start_t": avg_t[0],
+            }
+        )
 
 
 def main():
@@ -199,10 +251,11 @@ def main():
     my_config = {
         "algorithm": A2C,
         "target_steps": args.target_steps,
+        "threshold": 0.9,
         "num_train_envs": 16,
 
-        "epoch_num": 500,
-        "first_stage_epoch_num": 50,
+        "epoch_num": 450,
+        "first_stage_epoch_num": 200,
         "policy_network": "MultiInputPolicy",
         "timesteps_per_epoch": 100,
         "eval_episode_num": 16,
@@ -210,22 +263,34 @@ def main():
         "policy_kwargs": policy_kwargs,
 
         "max_steps": 100,
+        "task": args.deg,
+        "model_mode": "baseline" if args.baseline else "2_agents",
     }
-    my_config['run_id'] = f'{args.deg}_SR_2agent_A2C_env_{my_config["num_train_envs"]}_steps_{my_config["target_steps"]}'
-    my_config['save_path'] = f'model/{args.deg}_SR_2agent_A2C_{my_config["target_steps"]}'
-    # run = wandb.init(
-    #     project="final",
-    #     config=my_config,
-    #     sync_tensorboard=True,  # auto-upload sb3's tensorboard metrics
-    #     id=my_config["run_id"],
-    # )
+    
+    my_config['run_id'] = f'{my_config["task"]}_{args.path_y}_{my_config["model_mode"]}_A2C_env_{my_config["num_train_envs"]}_steps_{my_config["target_steps"]}'
+    if args.baseline == False:
+        if args.second_stage:
+            my_config['run_id'] += '_S2'
+        else:
+            my_config['run_id'] += '_S1'
+    my_config['save_path'] = f'model/{my_config["task"]}_{args.path_y}_{my_config["model_mode"]}_A2C_{my_config["target_steps"]}'
+    run = wandb.init(
+        project="final",
+        config=my_config,
+        sync_tensorboard=True,  # auto-upload sb3's tensorboard metrics
+        id=my_config["run_id"],
+    )
     
     config = {
             "target_steps": my_config["target_steps"],
             "max_steps": my_config["max_steps"],
+            "threshold": my_config["threshold"],
             "DM": runner,
-            "agent1": None,
+            # "agent1": None,
+            "model_mode": my_config["model_mode"],
         }
+    if args.baseline == False:
+        config["agent1"] = None
     # Create training environment 
     num_train_envs = my_config['num_train_envs']
     train_env = DummyVecEnv([make_env(config) for _ in range(num_train_envs)])
@@ -235,7 +300,8 @@ def main():
     # eval_env = DummyVecEnv([make_env(my_config)])  
 
     # Create evaluation environment (via SB3 API)
-    eval_env = gym.make('final-v0', **config)
+    del config["model_mode"]
+    eval_env = gym.make('final-baseline', **config) if args.baseline else gym.make('final-ours', **config)
 
     # Create model from loaded config and train
     # Note: Set verbose to 0 if you don't want info messages
@@ -246,21 +312,24 @@ def main():
         tensorboard_log=my_config["run_id"],
         learning_rate=my_config["learning_rate"],
         policy_kwargs=my_config["policy_kwargs"],
+        # ent_coef=0.05,
         # n_steps=128,
         # batch_size=my_config["batch_size"],
         # buffer_size=100000,
     )
     if args.second_stage == False:
-        ### First stage training
-        train(eval_env, model, my_config, epoch_num = my_config["first_stage_epoch_num"])
+        ### Subtask1 training
+        epoch_num = my_config['epoch_num'] if args.baseline else my_config["first_stage_epoch_num"]
+        train(eval_env, model, my_config, epoch_num = epoch_num, num_steps = args.target_steps)
     else:
-        ### Second stage training
+        ### Subtask2 training
         print("Loaded model from: ", f"{my_config['save_path']}/best")
         model = A2C.load(f"{my_config['save_path']}/best")
         config['agent1'] = model
-
+        config["model_mode"] = my_config["model_mode"]
         train_env = DummyVecEnv([make_env(config) for _ in range(num_train_envs)])
-        eval_env = gym.make('final-v0', **config)
+        del config["model_mode"]
+        eval_env = gym.make('final-ours', **config)
         model2 = my_config["algorithm"](
             my_config["policy_network"], 
             train_env, 
@@ -269,7 +338,7 @@ def main():
             learning_rate=my_config["learning_rate"],
             policy_kwargs=my_config["policy_kwargs"],
         )
-        train(eval_env, model2, my_config, epoch_num = my_config["epoch_num"] - my_config["first_stage_epoch_num"], second_stage=True)
+        train(eval_env, model2, my_config, epoch_num = my_config["epoch_num"], second_stage=True, num_steps = args.target_steps)
 
 if __name__ == '__main__':
     main()
