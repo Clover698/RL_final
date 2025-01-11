@@ -21,8 +21,12 @@ th.set_printoptions(sci_mode=False)
 
 warnings.filterwarnings("ignore")
 register(
-    id='final-eval',
+    id='final-ours',
     entry_point='envs:EvalDiffusionEnv',
+)
+register(
+    id='final-baseline',
+    entry_point='envs:BaselineEvalDiffusionEnv',
 )
 
 def make_env(my_config):
@@ -32,9 +36,15 @@ def make_env(my_config):
             "max_steps": my_config["max_steps"],
             "threshold": my_config["threshold"],
             "DM": my_config["DM"],
-            "agent1": my_config["agent1"],
+            # "agent1": my_config["agent1"],
         }
-        return gym.make('final-eval', **config)
+        if my_config["model_mode"] == "baseline":
+            print('Baseline training mode ...')
+            return gym.make('final-baseline', **config)
+        else:
+            print('2-agent training mode ...')
+            config["agent1"] = my_config["agent1"]
+            return gym.make('final-ours', **config)
     return _init
 
     
@@ -51,20 +61,17 @@ def evaluation(env, model, eval_num=100):
             # Interact with env using Gymnasium API
             action, _state = model.predict(obs, deterministic=True)
             obs, reward, done, info = env.step(action)
-        time_step_sequence = info[0]["time_step_sequence"]
+        print(info[0]['time_step_sequence'], info[0]['ssim'], info[0]['psnr'])
         avg_ssim += info[0]['ssim']
         avg_psnr += info[0]['psnr']
     avg_ssim /= eval_num
     avg_psnr /= eval_num
 
-    return avg_ssim, avg_psnr, time_step_sequence
+    return avg_ssim, avg_psnr
 
 def main():
     # Initialze DDNM
     args, config = parse_args_and_config()
-    with open("./output.txt", "a") as file:
-        file.write("==========================\n")
-        file.write(f'{args.eval_model_name}\n')
     runner = my_diffusion(args, config)
 
     policy_kwargs = dict(
@@ -83,9 +90,8 @@ def main():
     }
     my_config['save_path'] = f'model/{args.eval_model_name}/best'
 
-    ### Load model with SB3
+    ### Load agent of subtask1 with SB3
     agent1 = A2C.load(my_config['save_path'])
-    agent2 = A2C.load(my_config['save_path'] + '_2')
     print("Loaded model from: ", my_config['save_path'])
 
     config = {
@@ -93,23 +99,24 @@ def main():
             "max_steps": my_config["max_steps"],
             "threshold": my_config["threshold"],
             "DM": runner,
-            "agent1": agent1,
+            # "agent1": agent1,
+            "model_mode": "baseline" if args.baseline else "2_agents",
         }
+    # Load agent of subtask 2
+    if args.baseline == False:
+        agent2 = A2C.load(my_config['save_path'] + '_2')
+        config["agent1"] = agent1
 
     env = DummyVecEnv([make_env(config) for _ in range(my_config['num_eval_envs'])])
-    
-    avg_ssim, avg_psnr, timestep_sequence = evaluation(env, agent2, my_config['eval_num'])
+
+    if args.baseline == False:
+        avg_ssim, avg_psnr = evaluation(env, agent2, my_config['eval_num'])
+    else:
+        avg_ssim, avg_psnr = evaluation(env, agent1, my_config['eval_num'])
 
     print(f"Counts: (Total of {my_config['eval_num']} rollouts)")
     print("Total Average PSNR: %.2f" % avg_psnr)
     print("Total Average SSIM: %.3f" % avg_ssim)
-    with open("./output.txt", 'a') as file:
-        file.write(f"Counts: (Total of {my_config['eval_num']} rollouts)\n")
-        file.write(f"time step sequence = {time_step_sequence}\n")
-        file.write("Total Average SSIM: %.3f" % avg_ssim)
-        file.write("\n")
-        file.write("Total Average PSNR: %.3f" % avg_psnr)
-        file.write("\n")
 
 
 if __name__ == '__main__':
