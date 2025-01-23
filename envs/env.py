@@ -151,7 +151,7 @@ class DiffusionEnv(gym.Env):
                 self.previous_t = t
                 self.interval = int(t / (self.target_steps - 1)) 
                 self.uniform_interval = self.interval
-                # self.x = self.DM.get_noisy_x(t, self.x0_t, initial=True) # Commented out this line (Start from noise) if applying to CelebA dataset
+                # self.x = self.DM.get_noisy_x(t, self.x0_t, initial=True)
                 # self.action_sequence.append(action.item())
                 # self.previous_t = t
                 # self.x0_t, _,  self.et = self.DM.single_step_ddnm(self.x, self.y, t, self.classes)
@@ -205,7 +205,7 @@ class DiffusionEnv(gym.Env):
                 # print('t:', t)
                 self.old_interval = initial_t // (self.target_steps - 1)
                 self.interval = int(t / (self.target_steps - 1)) 
-                self.x = self.DM.get_noisy_x(t, self.x0_t, initial=True) # Commented out this line (Start from noise) if applying to CelebA dataset
+                self.x = self.DM.get_noisy_x(t, self.x0_t, initial=True)
                 self.pivot_x = self.DM.get_noisy_x(initial_t, self.x0_t, initial=True)
                 self.action_sequence.append(action.item())
             else: # Second subtask
