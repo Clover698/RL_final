@@ -78,7 +78,7 @@ class EvalDiffusionEnv(gym.Env):
                     start_t = 1000//self.discrete_space * (1+action) - 1 # Discrete action space
                 t = torch.tensor(int(max(0, min(start_t, 999))))
                 self.interval = int(t / (self.target_steps - 1)) 
-                # self.x = self.DM.get_noisy_x(t, self.x0_t, initial=True) # Comment this line for CelebA
+                # self.x = self.DM.get_noisy_x(t, self.x0_t, initial=True) 
                 # self.action_sequence.append(action.item())
                 self.previous_t = t
                 # self.x0_t, _,  self.et = self.DM.single_step_ddnm(self.x, self.y, t, self.classes)
@@ -105,7 +105,7 @@ class EvalDiffusionEnv(gym.Env):
                     start_t = 1000//self.discrete_space * (1+action) - 1 # Discrete action space
                 t = torch.tensor(int(max(0, min(start_t, 999))))
                 self.interval = int(t / (self.target_steps - 1)) 
-                self.x = self.DM.get_noisy_x(t, self.x0_t, initial=True)# Comment this line for CelebA
+                self.x = self.DM.get_noisy_x(t, self.x0_t, initial=True)
                 self.x0_t, _,  self.et = self.DM.single_step_ddnm(self.x, self.y, t, self.classes)
                 self.time_step_sequence.append(t.item())
                 self.action_sequence.append(action.item())
