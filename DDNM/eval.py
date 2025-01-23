@@ -104,15 +104,16 @@ def main():
         }
     # Load agent of subtask 2
     if args.baseline == False:
-        agent2 = A2C.load(my_config['save_path'] + '_2')
-        config["agent1"] = agent1
+        if args.subtask1 == False:
+            agent2 = A2C.load(my_config['save_path'] + '_2')
+        config["agent1"] = None if args.subtask1 else agent1
 
     env = DummyVecEnv([make_env(config) for _ in range(my_config['num_eval_envs'])])
 
-    if args.baseline == False:
-        avg_ssim, avg_psnr = evaluation(env, agent2, my_config['eval_num'])
-    else:
+    if args.baseline or args.subtask1:
         avg_ssim, avg_psnr = evaluation(env, agent1, my_config['eval_num'])
+    else:
+        avg_ssim, avg_psnr = evaluation(env, agent2, my_config['eval_num'])
 
     print(f"Counts: (Total of {my_config['eval_num']} rollouts)")
     print("Total Average PSNR: %.2f" % avg_psnr)

@@ -102,6 +102,15 @@ def parse_args_and_config():
     parser.add_argument(
         '--baseline', action="store_true"
     )
+    parser.add_argument(
+        '--subtask1', action="store_true"
+    )
+    parser.add_argument(
+        "--ablation",
+        type=str,
+        default="none",
+        help="baseline | subtask1_conti | subtask2 | compare | dense | percent"
+    )
 
 
     args = parser.parse_args()

@@ -80,22 +80,6 @@ class CustomCNN(BaseFeaturesExtractor):
             nn.Flatten(),
         )
 
-        # for layer in self.cnn:
-        #     if isinstance(layer, nn.Conv2d):
-        #         nn.init.kaiming_uniform_(layer.weight, nonlinearity='relu')
-        
-        # self.cnn2 = nn.Sequential(
-        #     nn.Conv2d(n_input_channels, 16, kernel_size=3, stride=1, padding=0),
-        #     nn.ReLU(),
-        #     nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=0),
-        #     nn.ReLU(),
-        # )
-
-        # self.mix_fc = nn.Sequential(
-        #     nn.Conv2d(64, 32, kernel_size=1, stride=1, padding=0),
-        #     nn.Flatten(),
-        # )
-
         # Compute shape by doing one forward pass
         with th.no_grad():
             n_flatten = self.cnn(
@@ -103,6 +87,8 @@ class CustomCNN(BaseFeaturesExtractor):
             ).shape[1]
 
         self.fc = nn.Linear(1, 32)
+        self.fc2 = nn.Linear(1, 32)
+        self.fc_merge = nn.Linear(64, 32)
         self.embedding_output = nn.Linear(32, features_dim * 2)
         self.out_norm = nn.Linear(n_flatten, features_dim)  # Normalizing layer
         self.out_rest = nn.Sequential(
@@ -112,14 +98,12 @@ class CustomCNN(BaseFeaturesExtractor):
 
     def forward(self, observations: th.Tensor) -> th.Tensor:
         img_features = self.cnn(observations['image'].float())
-        # if 'image2' in observations:
-        #     img_features2 = self.cnn2(observations['image2'].float())
-        #     img_features = th.cat((img_features, img_features2), dim=1)
-        #     img_features = self.mix_fc(img_features)
-        # else:
-            # img_features = img_features.flatten()
-
         value_features = F.relu(self.fc(observations['value'].float()))
+        
+        if 'remain' in observations:
+            remain_features = F.relu(self.fc2(observations['remain'].float()))
+            value_features = self.fc_merge(th.cat([value_features, remain_features], dim=1))
+
         if self.use_scale_shift_norm:
             emb_out = self.embedding_output(value_features)
             scale, shift = th.chunk(emb_out, 2, dim=1)
@@ -137,8 +121,12 @@ def eval(env, model, eval_episode_num, num_steps):
     avg_t = [0 for _ in range(num_steps)]
     avg_ssim = 0
     avg_psnr = 0
+    pivot_ssim = 0
+    pivot_psnr = 0
     ddim_ssim = 0
     ddim_psnr = 0
+    ddnm_ssim = 0
+    ddnm_psnr = 0
     avg_start_t = 0
     with th.no_grad():
         for seed in range(eval_episode_num):
@@ -158,8 +146,12 @@ def eval(env, model, eval_episode_num, num_steps):
             avg_reward += info['reward']
             avg_ssim   += info['ssim']
             avg_psnr += info['psnr']
+            pivot_ssim += info['pivot_ssim']
+            pivot_psnr += info['pivot_psnr']
             ddim_ssim += info['ddim_ssim']
             ddim_psnr += info['ddim_psnr']
+            ddnm_ssim += info['ddnm_ssim']
+            ddnm_psnr += info['ddnm_psnr']
             # avg_start_t += info['time_step_sequence'][0]
             for i in range(num_steps):
                 avg_t[i] += info['time_step_sequence'][i]
@@ -167,14 +159,18 @@ def eval(env, model, eval_episode_num, num_steps):
     avg_reward /= eval_episode_num
     avg_ssim /= eval_episode_num
     avg_psnr /= eval_episode_num
+    pivot_ssim /= eval_episode_num
+    pivot_psnr /= eval_episode_num
     ddim_ssim /= eval_episode_num
     ddim_psnr /= eval_episode_num
+    ddnm_ssim /= eval_episode_num
+    ddnm_psnr /= eval_episode_num
     avg_start_t /= eval_episode_num
     for i in range(num_steps):
         avg_reward_t[i] = (avg_reward_t[i] / eval_episode_num)
         avg_t[i] = avg_t[i] / eval_episode_num
     
-    return avg_reward, avg_ssim, avg_psnr, ddim_ssim, ddim_psnr, info['time_step_sequence'], info['action_sequence'], info['threshold'], avg_reward_t, avg_t
+    return avg_reward, avg_ssim, avg_psnr, pivot_ssim, pivot_psnr, ddim_ssim, ddim_psnr, ddnm_ssim, ddnm_psnr, info['time_step_sequence'], info['action_sequence'], info['threshold'], avg_reward_t, avg_t
 
 def train(eval_env, model, config, epoch_num, second_stage=False, num_steps=5):
     """Train agent using SB3 algorithm and my_config"""
@@ -196,12 +192,13 @@ def train(eval_env, model, config, epoch_num, second_stage=False, num_steps=5):
         ### Evaluation
         print(config["run_id"])
         print("Epoch: ", epoch)
-        avg_reward, avg_ssim, avg_psnr, ddim_ssim, ddim_psnr, time_step_sequence, action_sequence, threshold, avg_reward_t, avg_t = eval(eval_env, model, config["eval_episode_num"], num_steps)
+        avg_reward, avg_ssim, avg_psnr, pivot_ssim, pivot_psnr, ddim_ssim, ddim_psnr, ddnm_ssim, ddnm_psnr, time_step_sequence, action_sequence, threshold, avg_reward_t, avg_t = eval(eval_env, model, config["eval_episode_num"], num_steps)
 
         print("---------------")
 
         ### Save best model
-        if current_best_psnr < avg_psnr and current_best_ssim < avg_ssim:# and epoch > 10:
+        if (current_best_psnr + current_best_ssim) < (avg_psnr + avg_ssim) and (current_best_psnr < avg_psnr):# and epoch > 10:
+        # if current_best_psnr < avg_psnr and current_best_ssim < avg_ssim:# and epoch > 10:
             print("Saving Model !!!")
             current_best_psnr = avg_psnr
             current_best_ssim = avg_ssim
@@ -222,8 +219,12 @@ def train(eval_env, model, config, epoch_num, second_stage=False, num_steps=5):
         print("Avg_psnr:    ", avg_psnr)
         print("Current_best_ssim:", current_best_ssim)
         print("Current_best_psnr:", current_best_psnr)
+        print("Pivot_ssim:  ", pivot_ssim)
+        print("Pivot_psnr:  ", pivot_psnr)
         print("DDIM_ssim:   ", ddim_ssim)
         print("DDIM_psnr:   ", ddim_psnr)
+        print("DDNM_ssim:   ", ddnm_ssim)
+        print("DDNM_psnr:   ", ddnm_psnr)
         print("Time_step_sequence:", time_step_sequence)
         print("Action_sequence:", action_sequence)
         print()
@@ -232,8 +233,12 @@ def train(eval_env, model, config, epoch_num, second_stage=False, num_steps=5):
                 "avg_reward": avg_reward,
                 "avg_ssim": avg_ssim,
                 "avg_psnr": avg_psnr,
+                "pivot_ssim": pivot_ssim,
+                "pivot_psnr": pivot_psnr,
                 "ddim_ssim": ddim_ssim,
                 "ddim_psnr": ddim_psnr,
+                "ddnm_ssim": ddnm_ssim,
+                "ddnm_psnr": ddnm_psnr,
                 "start_t": avg_t[0],
             }
         )
@@ -254,26 +259,27 @@ def main():
         "threshold": 0.9,
         "num_train_envs": 16,
 
-        "epoch_num": 450,
-        "first_stage_epoch_num": 200,
+        "epoch_num": 200,
+        "first_stage_epoch_num": 50,
         "policy_network": "MultiInputPolicy",
         "timesteps_per_epoch": 100,
         "eval_episode_num": 16,
-        "learning_rate": 1e-4,
+        "learning_rate": 1e-4, 
         "policy_kwargs": policy_kwargs,
 
         "max_steps": 100,
         "task": args.deg,
         "model_mode": "baseline" if args.baseline else "2_agents",
+
     }
     
-    my_config['run_id'] = f'{my_config["task"]}_{args.path_y}_{my_config["model_mode"]}_A2C_env_{my_config["num_train_envs"]}_steps_{my_config["target_steps"]}'
+    my_config['run_id'] = f'{my_config["task"]}_{args.path_y}_{my_config["model_mode"]}_Remain3.2_A2C_env_{my_config["num_train_envs"]}_steps_{my_config["target_steps"]}'
     if args.baseline == False:
         if args.second_stage:
             my_config['run_id'] += '_S2'
         else:
             my_config['run_id'] += '_S1'
-    my_config['save_path'] = f'model/{my_config["task"]}_{args.path_y}_{my_config["model_mode"]}_A2C_{my_config["target_steps"]}'
+    my_config['save_path'] = f'model/{my_config["task"]}_{args.path_y}_{my_config["model_mode"]}_Remain3_A2C_{my_config["target_steps"]}'
     run = wandb.init(
         project="final",
         config=my_config,
@@ -318,11 +324,11 @@ def main():
         # buffer_size=100000,
     )
     if args.second_stage == False:
-        ### Subtask1 training
+        ### First stage training
         epoch_num = my_config['epoch_num'] if args.baseline else my_config["first_stage_epoch_num"]
         train(eval_env, model, my_config, epoch_num = epoch_num, num_steps = args.target_steps)
     else:
-        ### Subtask2 training
+        ### Second stage training
         print("Loaded model from: ", f"{my_config['save_path']}/best")
         model = A2C.load(f"{my_config['save_path']}/best")
         config['agent1'] = model
