@@ -14,7 +14,7 @@ import gc
 from tqdm import tqdm
 
 class DiffusionEnv(gym.Env):
-    def __init__(self, target_steps=10, max_steps=100, threshold=0.8, DM=None, agent1=None):
+    def __init__(self, target_steps=10, max_steps=100, threshold=0.8, DM=None, agent1=None, seed=232):
         super(DiffusionEnv, self).__init__()
         self.DM = DM
         self.agent1 = agent1
@@ -43,11 +43,11 @@ class DiffusionEnv(gym.Env):
             self.action_space = spaces.Discrete(100) # Discrete action space
             # self.action_space = gym.spaces.Box(low=0, high=1) # Continuous action space
             self.observation_space = Dict({
-                "image": Box(low=0, high=1, shape=(3, self.sample_size, self.sample_size), dtype=np.float32),
-                "value": Box(low=np.array([0]), high=np.array([999]), dtype=np.uint16)
+                "image": Box(low=-1, high=1, shape=(3, self.sample_size, self.sample_size), dtype=np.float32),
+                # "value": Box(low=np.array([0]), high=np.array([999]), dtype=np.uint16)
             })
         # Initialize the random seed
-        self.seed(232)
+        self.seed(seed)
         self.reset()
         # print("Training data size:", len(self.DM.dataset))
         ### Generate target PSNR and SSIM
@@ -138,7 +138,7 @@ class DiffusionEnv(gym.Env):
 
         observation = {
             "image": self.x0_t[0].cpu(),  
-            "value": np.array([999]),
+            # "value": np.array([999]),
         }
         
         if self.adjust: # Second subtask
@@ -190,6 +190,7 @@ class DiffusionEnv(gym.Env):
         # images.save(filename)
         if self.adjust:
             observation["remain"] = np.array([self.target_steps])
+            observation["value"] = np.array([999])
         return observation, {}
     
     def step(self, action):
@@ -277,7 +278,7 @@ class DiffusionEnv(gym.Env):
         else:
             observation = {
                 "image":  self.x0_t[0].cpu(),  
-                "value": np.array([t])
+                # "value": np.array([t])
             }
         self.current_step_num += 1
         torch.cuda.empty_cache()  # Clear GPU cache
